@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema Web de Gestão Acadêmica</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<main class="container" role="main">
+    <!-- TELA DE LOGIN -->
+    <section id="sec-login" class="card" aria-labelledby="login-title">
+        <h1 id="login-title">Acesso ao Sistema Acadêmico</h1>
+        <form id="form-login">
+            <div class="form-group">
+                <label for="login-cpf">CPF:</label>
+                <input type="text" id="login-cpf" placeholder="123.456.789-00" required aria-required="true">
+            </div>
+            <div class="form-group">
+                <label for="login-senha">Senha:</label>
+                <input type="password" id="login-senha" value="123456" required aria-required="true">
+            </div>
+            <button type="submit" class="btn">Entrar</button>
+        </form>
+    </section>
+
+    <!-- PAINEL PRINCIPAL -->
+    <section id="sec-painel" class="card hidden" aria-labelledby="painel-title">
+        <header class="header">
+            <div>
+                <h1 id="painel-title">Gestão Acadêmica</h1>
+                <p>Usuário: <strong id="user-name">--</strong> [<span id="user-perfil" class="badge">--</span>]</p>
+            </div>
+            <button id="btn-logout" class="btn btn-danger" aria-label="Encerrar Sessão">Sair</button>
+        </header>
+
+        <!-- FORMULÁRIO DE EDIÇÃO (APENAS INSTRUTOR) -->
+        <section id="editor-aula" class="card hidden" aria-labelledby="editor-title">
+            <h2 id="editor-title">Cadastrar / Editar Aula</h2>
+            <form id="form-aula">
+                <input type="hidden" id="aula-id">
+                <div class="form-group">
+                    <label for="aula-turma">Turma:</label>
+                    <input type="text" id="aula-turma" required>
+                </div>
+                <div class="form-group">
+                    <label for="aula-materia">Matéria:</label>
+                    <input type="text" id="aula-materia" required>
+                </div>
+                <div class="form-group">
+                    <label for="aula-data">Data:</label>
+                    <input type="date" id="aula-data" required>
+                </div>
+                <div class="form-group">
+                    <label for="aula-horario">Horário:</label>
+                    <input type="time" id="aula-horario" required>
+                </div>
+                <div class="form-group">
+                    <label for="aula-conteudo">Conteúdo Programado:</label>
+                    <textarea id="aula-conteudo" rows="3" required></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="aula-status">Status:</label>
+                    <select id="aula-status">
+                        <option value="Agendada">Agendada</option>
+                        <option value="Realizada">Realizada</option>
+                        <option value="Cancelada">Cancelada</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn" id="btn-salvar-aula">Salvar Alterações</button>
+            </form>
+        </section>
+
+        <!-- LISTAGEM DAS AULAS DO DIA -->
+        <section aria-labelledby="aulas-title">
+            <h2 id="aulas-title">Aulas Cadastradas</h2>
+            <div class="table-responsive">
+                <table role="table">
+                    <thead>
+                        <tr>
+                            <th scope="col">Turma</th>
+                            <th scope="col">Matéria</th>
+                            <th scope="col">Data/Hora</th>
+                            <th scope="col">Conteúdo</th>
+                            <th scope="col">Status</th>
+                            <th scope="col" class="col-acoes hidden">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="lista-aulas"></tbody>
+                </table>
+            </div>
+        </section>
+    </section>
+</main>
+
+<!-- Início do Plugin Hand Talk -->
+<script src="https://plugin.handtalk.me/web/latest/handtalk.min.js"></script>
+<script>
+  var ht = new HT({
+    token: "SEU_TOKEN_AQUI"
+  });
+</script>
+<!-- Fim do Plugin Hand Talk -->
+
+<!-- Início do Widget VLibras -->
+<div vw class="enabled">
+  <div vw-access-button class="active"></div>
+  <div vw-plugin-wrapper>
+    <div class="vw-plugin-top-wrapper"></div>
+  </div>
+</div>
+<script src="https://vlibras.gov.br/app/vlibras-plugin.js"></script>
+<script>
+  new window.VLibras.Widget('https://vlibras.gov.br/app');
+</script>
+<!-- Fim do Widget VLibras -->
+
+<script src="app.js"></script>
+</body>
+</html>
