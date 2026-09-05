@@ -1,0 +1,40 @@
+CREATE DATABASE IF NOT EXISTS gestao_academica CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+USE gestao_academica;
+
+-- Tabela de Usuários (Acesso)
+CREATE TABLE usuarios (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    nome VARCHAR(100) NOT NULL,
+    cpf VARCHAR(14) UNIQUE NOT NULL,
+    senha VARCHAR(255) NOT NULL,
+    perfil ENUM('instrutor', 'aluno') DEFAULT 'aluno'
+);
+
+-- Tabela de Instrutores Cadastrados
+CREATE TABLE instrutores (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    cpf VARCHAR(14) UNIQUE NOT NULL
+);
+
+-- Tabela de Aulas (Gerenciada pelo Instrutor)
+CREATE TABLE aulas (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    turma VARCHAR(50) NOT NULL,
+    materia VARCHAR(100) NOT NULL,
+    data_aula DATE NOT NULL,
+    horario TIME NOT NULL,
+    conteudo TEXT NOT NULL,
+    status ENUM('Agendada', 'Realizada', 'Cancelada') DEFAULT 'Agendada'
+);
+
+-- Inserir o CPF do Instrutor Autorizado
+INSERT INTO instrutores (cpf) VALUES ('123.456.789-00');
+
+-- Inserir Usuários Iniciais (Senha: 123456)
+INSERT INTO usuarios (nome, cpf, senha, perfil) VALUES 
+('Professor Carlos', '123.456.789-00', '123456', 'instrutor'),
+('Aluno João', '987.654.321-11', '123456', 'aluno');
+
+-- Aula Inicial de Exemplo
+INSERT INTO aulas (turma, materia, data_aula, horario, conteudo, status) VALUES 
+('Turma A', 'Desenvolvimento Web', CURRENT_DATE(), '19:00:00', 'Introdução ao MySQL e PHP', 'Agendada');
