@@ -1,0 +1,800 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Gestão Acadêmica</title>
+    <style>
+        :root {
+            --primary: #2c3e50;
+            --secondary: #3498db;
+            --accent: #e74c3c;
+            --light: #ecf0f1;
+            --dark: #34495e;
+            --success: #2ecc71;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: #f4f6f9;
+            color: #333;
+        }
+
+        /* --- TELA DE LOGIN --- */
+        .login-wrapper {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+        }
+
+        .login-card {
+            background: white;
+            padding: 2.5rem;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            width: 100%;
+            max-width: 400px;
+        }
+
+        .login-card h2 {
+            margin-bottom: 1.5rem;
+            color: var(--primary);
+            text-align: center;
+        }
+
+        .form-group {
+            margin-bottom: 1.2rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+        }
+
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 1rem;
+        }
+
+        .btn {
+            background-color: var(--secondary);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 1rem;
+            width: 100%;
+            transition: background 0.3s;
+        }
+
+        .btn:hover {
+            background-color: #2980b9;
+        }
+
+        .btn-danger {
+            background-color: var(--accent);
+            width: auto;
+            padding: 0.4rem 0.8rem;
+            font-size: 0.85rem;
+        }
+
+        .btn-danger:hover {
+            background-color: #c0392b;
+        }
+
+        /* --- LAYOUT DO SISTEMA --- */
+        .app-container {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        .sidebar {
+            width: 250px;
+            background-color: var(--primary);
+            color: white;
+            padding: 1.5rem 1rem;
+            flex-shrink: 0;
+        }
+
+        .sidebar h2 {
+            font-size: 1.2rem;
+            margin-bottom: 2rem;
+            text-align: center;
+            border-bottom: 1px solid var(--dark);
+            padding-bottom: 1rem;
+        }
+
+        .sidebar nav ul {
+            list-style: none;
+        }
+
+        .sidebar nav li {
+            margin-bottom: 0.5rem;
+        }
+
+        .sidebar nav a {
+            color: var(--light);
+            text-decoration: none;
+            display: block;
+            padding: 0.75rem 1rem;
+            border-radius: 4px;
+            transition: background 0.2s;
+        }
+
+        .sidebar nav a:hover, .sidebar nav a.active {
+            background-color: var(--secondary);
+            color: white;
+        }
+
+        .main-content {
+            flex-grow: 1;
+            padding: 2rem;
+            overflow-y: auto;
+        }
+
+        .header-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            background: white;
+            padding: 1rem 1.5rem;
+            border-radius: 6px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 6px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            border-left: 4px solid var(--secondary);
+        }
+
+        .card h3 {
+            font-size: 0.9rem;
+            color: #777;
+            text-transform: uppercase;
+            margin-bottom: 0.5rem;
+        }
+
+        .card .value {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: var(--primary);
+        }
+
+        .content-block {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 6px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            margin-bottom: 2rem;
+        }
+
+        .content-block h3 {
+            margin-bottom: 1rem;
+            color: var(--primary);
+        }
+
+        /* --- TABELAS --- */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+
+        table th, table td {
+            padding: 0.75rem;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+
+        table th {
+            background-color: #f8f9fa;
+            color: var(--dark);
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .alert-error {
+            color: var(--accent);
+            font-size: 0.9rem;
+            margin-top: 0.5rem;
+        }
+
+        .inline-form {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 1rem;
+            align-items: end;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- TELA DE LOGIN -->
+    <div id="screen-login" class="login-wrapper">
+        <div class="login-card">
+            <h2>Gestão Acadêmica</h2>
+            <form id="form-login">
+                <div class="form-group">
+                    <label for="login-user">Usuário</label>
+                    <input type="text" id="login-user" required placeholder="admin">
+                </div>
+                <div class="form-group">
+                    <label for="login-pass">Senha</label>
+                    <input type="password" id="login-pass" required placeholder="123">
+                </div>
+                <button type="submit" class="btn">Entrar</button>
+                <div id="login-error" class="alert-error hidden">Usuário ou senha incorretos!</div>
+            </form>
+        </div>
+    </div>
+
+    <!-- PAINEL PRINCIPAL DO SISTEMA -->
+    <div id="screen-app" class="app-container hidden">
+        <!-- BARRA LATERAL / MENU -->
+        <aside class="sidebar">
+            <h2>SGA Painel</h2>
+            <nav>
+                <ul>
+                    <li><a href="#" class="nav-link active" data-target="mod-dashboard">Dashboard</a></li>
+                    <li><a href="#" class="nav-link" data-target="mod-instrutores">Instrutores</a></li>
+                    <li><a href="#" class="nav-link" data-target="mod-salas">Salas</a></li>
+                    <li><a href="#" class="nav-link" data-target="mod-horarios">Horários</a></li>
+                    <li><a href="#" class="nav-link" data-target="mod-admins">Administradores</a></li>
+                    <li><a href="#" class="nav-link" data-target="mod-relatorios">Relatórios</a></li>
+                    <li><a href="#" class="nav-link" data-target="mod-senha">Alterar Senha</a></li>
+                    <li><a href="#" id="btn-logout" style="color: var(--accent);">Sair</a></li>
+                </ul>
+            </nav>
+        </aside>
+
+        <!-- CONTEÚDO PRINCIPAL -->
+        <main class="main-content">
+            <header class="header-bar">
+                <h1 id="page-title">Dashboard</h1>
+                <div>Usuário: <strong id="logged-user-name">Admin</strong></div>
+            </header>
+
+            <!-- MÓDULO 1: DASHBOARD -->
+            <section id="mod-dashboard" class="module-section">
+                <div class="cards-grid">
+                    <div class="card">
+                        <h3>Total Instrutores</h3>
+                        <div class="value" id="dash-count-instrutores">0</div>
+                    </div>
+                    <div class="card">
+                        <h3>Total Salas</h3>
+                        <div class="value" id="dash-count-salas">0</div>
+                    </div>
+                    <div class="card">
+                        <h3>Horários Agendados</h3>
+                        <div class="value" id="dash-count-horarios">0</div>
+                    </div>
+                </div>
+
+                <div class="content-block">
+                    <h3>Resumo de Atividades Gerais</h3>
+                    <p>Bem-vindo ao Sistema de Gestão Acadêmica. Utilize o menu lateral para navegar entre os módulos cadastrais e relatórios.</p>
+                </div>
+            </section>
+
+            <!-- MÓDULO 2: INSTRUTORES -->
+            <section id="mod-instrutores" class="module-section hidden">
+                <div class="content-block">
+                    <h3>Cadastrar Instrutor</h3>
+                    <form id="form-instrutor" class="inline-form">
+                        <div class="form-group">
+                            <label>Nome</label>
+                            <input type="text" id="inst-nome" required>
+                        </div>
+                        <div class="form-group">
+                            <label>E-mail</label>
+                            <input type="email" id="inst-email" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Área / Disciplina</label>
+                            <input type="text" id="inst-area" required>
+                        </div>
+                        <div class="form-group">
+                            <button type="submit" class="btn">Salvar</button>
+                        </div>
+                    </form>
+                </div>
+
+                <div class="content-block">
+                    <h3>Lista de Instrutores</h3>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Nome</th>
+                                <th>E-mail</th>
+                                <th>Área</th>
+                                <th>Ação</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tb-instrutores"></tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- MÓDULO 3: SALAS -->
+            <section id="mod-salas" class="module-section hidden">
+                <div class="content-block">
+                    <h3>Cadastrar Sala / Laboratório</h3>
+                    <form id="form-sala" class="inline-form">
+                        <div class="form-group">
+                            <label>Nome da Sala</label>
+                            <input type="text" id="sala-nome" placeholder="Ex: Lab 01" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Capacidade</label>
+                            <input type="number" id="sala-capacidade" placeholder="Ex: 30" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Tipo</label>
+                            <select id="sala-tipo">
+                                <option>Laboratório</option>
+                                <option>Sala de Aula</option>
+                                <option>Auditório</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <button type="submit" class="btn">Salvar</button>
+                        </div>
+                    </form>
+                </div>
+
+                <div class="content-block">
+                    <h3>Salas Cadastradas</h3>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Nome</th>
+                                <th>Capacidade</th>
+                                <th>Tipo</th>
+                                <th>Ação</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tb-salas"></tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- MÓDULO 4: HORÁRIOS -->
+            <section id="mod-horarios" class="module-section hidden">
+                <div class="content-block">
+                    <h3>Agendar Horário</h3>
+                    <form id="form-horario" class="inline-form">
+                        <div class="form-group">
+                            <label>Turma / Curso</label>
+                            <input type="text" id="hor-turma" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Sala</label>
+                            <select id="hor-sala" required></select>
+                        </div>
+                        <div class="form-group">
+                            <label>Instrutor</label>
+                            <select id="hor-instrutor" required></select>
+                        </div>
+                        <div class="form-group">
+                            <label>Turno</label>
+                            <select id="hor-turno">
+                                <option>Manhã</option>
+                                <option>Tarde</option>
+                                <option>Noite</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <button type="submit" class="btn">Agendar</button>
+                        </div>
+                    </form>
+                </div>
+
+                <div class="content-block">
+                    <h3>Grade de Horários</h3>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Turma</th>
+                                <th>Sala</th>
+                                <th>Instrutor</th>
+                                <th>Turno</th>
+                                <th>Ação</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tb-horarios"></tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- MÓDULO 5: ADMINISTRADORES -->
+            <section id="mod-admins" class="module-section hidden">
+                <div class="content-block">
+                    <h3>Novo Administrador</h3>
+                    <form id="form-admin" class="inline-form">
+                        <div class="form-group">
+                            <label>Usuário</label>
+                            <input type="text" id="adm-user" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Senha</label>
+                            <input type="password" id="adm-pass" required>
+                        </div>
+                        <div class="form-group">
+                            <button type="submit" class="btn">Cadastrar</button>
+                        </div>
+                    </form>
+                </div>
+
+                <div class="content-block">
+                    <h3>Lista de Administradores</h3>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Usuário</th>
+                                <th>Perfil</th>
+                                <th>Ação</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tb-admins"></tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- MÓDULO 6: RELATÓRIOS -->
+            <section id="mod-relatorios" class="module-section hidden">
+                <div class="content-block">
+                    <h3>Relatório de Alocação</h3>
+                    <p>Visão detalhada das turmas, instrutores e salas associadas.</p>
+                    <table style="margin-top:1.5rem;">
+                        <thead>
+                            <tr>
+                                <th>Curso/Turma</th>
+                                <th>Instrutor Resp.</th>
+                                <th>Espaço Alocado</th>
+                                <th>Turno</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tb-relatorios"></tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- MÓDULO 7: ALTERAR SENHA -->
+            <section id="mod-senha" class="module-section hidden">
+                <div class="content-block" style="max-width: 400px;">
+                    <h3>Alterar Senha do Usuário</h3>
+                    <form id="form-alterar-senha">
+                        <div class="form-group">
+                            <label>Nova Senha</label>
+                            <input type="password" id="nova-senha" required>
+                        </div>
+                        <button type="submit" class="btn">Atualizar Senha</button>
+                    </form>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- SCRIPT DE LÓGICA DO SISTEMA -->
+    <script>
+        // --- 1. GERENCIAMENTO DE BANCO DE DADOS (LOCALSTORAGE) ---
+        function initStorage() {
+            if (!localStorage.getItem('sys_iniciado')) {
+                localStorage.setItem('usuarios', JSON.stringify([
+                    { id: 1, usuario: 'admin', senha: '123', perfil: 'Administrador' }
+                ]));
+                localStorage.setItem('instrutores', JSON.stringify([
+                    { id: 1, nome: 'Carlos Silva', email: 'carlos@escola.com', area: 'Informática' }
+                ]));
+                localStorage.setItem('salas', JSON.stringify([
+                    { id: 1, nome: 'Lab 01', capacidade: 30, tipo: 'Laboratório' }
+                ]));
+                localStorage.setItem('horarios', JSON.stringify([
+                    { id: 1, turma: 'DEV-2026', sala: 'Lab 01', instrutor: 'Carlos Silva', turno: 'Manhã' }
+                ]));
+                localStorage.setItem('sys_iniciado', 'true');
+            }
+        }
+
+        function getData(key) {
+            return JSON.parse(localStorage.getItem(key)) || [];
+        }
+
+        function saveData(key, data) {
+            localStorage.setItem(key, JSON.stringify(data));
+        }
+
+        function insertItem(key, item) {
+            const data = getData(key);
+            item.id = Date.now();
+            data.push(item);
+            saveData(key, data);
+        }
+
+        function removeItem(key, id) {
+            let data = getData(key);
+            data = data.filter(i => i.id !== Number(id));
+            saveData(key, data);
+        }
+
+        // --- 2. CONTROLE DE AUTENTICAÇÃO ---
+        const elLoginScreen = document.getElementById('screen-login');
+        const elAppScreen = document.getElementById('screen-app');
+        const elFormLogin = document.getElementById('form-login');
+        const elLoginError = document.getElementById('login-error');
+
+        elFormLogin.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const u = document.getElementById('login-user').value;
+            const p = document.getElementById('login-pass').value;
+
+            const users = getData('usuarios');
+            const found = users.find(item => item.usuario === u && item.senha === p);
+
+            if (found) {
+                localStorage.setItem('usuario_logado', JSON.stringify(found));
+                elLoginError.classList.add('hidden');
+                checkSession();
+            } else {
+                elLoginError.classList.remove('hidden');
+            }
+        });
+
+        document.getElementById('btn-logout').addEventListener('click', (e) => {
+            e.preventDefault();
+            localStorage.removeItem('usuario_logado');
+            checkSession();
+        });
+
+        function checkSession() {
+            const user = JSON.parse(localStorage.getItem('usuario_logado'));
+            if (user) {
+                elLoginScreen.classList.add('hidden');
+                elAppScreen.classList.remove('hidden');
+                document.getElementById('logged-user-name').textContent = user.usuario;
+                updateDashboard();
+                renderAllTables();
+            } else {
+                elAppScreen.classList.add('hidden');
+                elLoginScreen.classList.remove('hidden');
+            }
+        }
+
+        // --- 3. NAUFRAGATIVIDADE E MÓDULOS ---
+        const navLinks = document.querySelectorAll('.nav-link');
+        const sections = document.querySelectorAll('.module-section');
+        const pageTitle = document.getElementById('page-title');
+
+        navLinks.forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                const target = link.getAttribute('data-target');
+
+                navLinks.forEach(l => l.classList.remove('active'));
+                link.classList.add('active');
+
+                sections.forEach(sec => {
+                    if (sec.id === target) {
+                        sec.classList.remove('hidden');
+                        pageTitle.textContent = link.textContent;
+                    } else {
+                        sec.classList.add('hidden');
+                    }
+                });
+
+                if(target === 'mod-horarios') updateDropdownsHorarios();
+                if(target === 'mod-dashboard') updateDashboard();
+            });
+        });
+
+        // --- 4. RENDERIZAÇÃO E FORMULÁRIOS DOS MÓDULOS ---
+
+        function updateDashboard() {
+            document.getElementById('dash-count-instrutores').textContent = getData('instrutores').length;
+            document.getElementById('dash-count-salas').textContent = getData('salas').length;
+            document.getElementById('dash-count-horarios').textContent = getData('horarios').length;
+        }
+
+        // Instrutores
+        document.getElementById('form-instrutor').addEventListener('submit', function(e) {
+            e.preventDefault();
+            insertItem('instrutores', {
+                nome: document.getElementById('inst-nome').value,
+                email: document.getElementById('inst-email').value,
+                area: document.getElementById('inst-area').value
+            });
+            this.reset();
+            renderInstrutores();
+        });
+
+        function renderInstrutores() {
+            const tbody = document.getElementById('tb-instrutores');
+            tbody.innerHTML = '';
+            getData('instrutores').forEach(item => {
+                tbody.innerHTML += `
+                    <tr>
+                        <td>${item.nome}</td>
+                        <td>${item.email}</td>
+                        <td>${item.area}</td>
+                        <td><button class="btn btn-danger" onclick="deleteAndRefresh('instrutores', ${item.id})">Excluir</button></td>
+                    </tr>
+                `;
+            });
+        }
+
+        // Salas
+        document.getElementById('form-sala').addEventListener('submit', function(e) {
+            e.preventDefault();
+            insertItem('salas', {
+                nome: document.getElementById('sala-nome').value,
+                capacidade: document.getElementById('sala-capacidade').value,
+                tipo: document.getElementById('sala-tipo').value
+            });
+            this.reset();
+            renderSalas();
+        });
+
+        function renderSalas() {
+            const tbody = document.getElementById('tb-salas');
+            tbody.innerHTML = '';
+            getData('salas').forEach(item => {
+                tbody.innerHTML += `
+                    <tr>
+                        <td>${item.nome}</td>
+                        <td>${item.capacidade}</td>
+                        <td>${item.tipo}</td>
+                        <td><button class="btn btn-danger" onclick="deleteAndRefresh('salas', ${item.id})">Excluir</button></td>
+                    </tr>
+                `;
+            });
+        }
+
+        // Horários
+        function updateDropdownsHorarios() {
+            const selSala = document.getElementById('hor-sala');
+            const selInst = document.getElementById('hor-instrutor');
+
+            selSala.innerHTML = '';
+            selInst.innerHTML = '';
+
+            getData('salas').forEach(s => {
+                selSala.innerHTML += `<option value="${s.nome}">${s.nome}</option>`;
+            });
+            getData('instrutores').forEach(i => {
+                selInst.innerHTML += `<option value="${i.nome}">${i.nome}</option>`;
+            });
+        }
+
+        document.getElementById('form-horario').addEventListener('submit', function(e) {
+            e.preventDefault();
+            insertItem('horarios', {
+                turma: document.getElementById('hor-turma').value,
+                sala: document.getElementById('hor-sala').value,
+                instrutor: document.getElementById('hor-instrutor').value,
+                turno: document.getElementById('hor-turno').value
+            });
+            this.reset();
+            renderHorarios();
+        });
+
+        function renderHorarios() {
+            const tbody = document.getElementById('tb-horarios');
+            const tbodyRel = document.getElementById('tb-relatorios');
+            tbody.innerHTML = '';
+            tbodyRel.innerHTML = '';
+
+            getData('horarios').forEach(item => {
+                const tr = `
+                    <tr>
+                        <td>${item.turma}</td>
+                        <td>${item.sala}</td>
+                        <td>${item.instrutor}</td>
+                        <td>${item.turno}</td>
+                        <td><button class="btn btn-danger" onclick="deleteAndRefresh('horarios', ${item.id})">Excluir</button></td>
+                    </tr>
+                `;
+                tbody.innerHTML += tr;
+
+                tbodyRel.innerHTML += `
+                    <tr>
+                        <td>${item.turma}</td>
+                        <td>${item.instrutor}</td>
+                        <td>${item.sala}</td>
+                        <td>${item.turno}</td>
+                    </tr>
+                `;
+            });
+        }
+
+        // Administradores
+        document.getElementById('form-admin').addEventListener('submit', function(e) {
+            e.preventDefault();
+            insertItem('usuarios', {
+                usuario: document.getElementById('adm-user').value,
+                senha: document.getElementById('adm-pass').value,
+                perfil: 'Administrador'
+            });
+            this.reset();
+            renderAdmins();
+        });
+
+        function renderAdmins() {
+            const tbody = document.getElementById('tb-admins');
+            tbody.innerHTML = '';
+            getData('usuarios').forEach(item => {
+                tbody.innerHTML += `
+                    <tr>
+                        <td>${item.usuario}</td>
+                        <td>${item.perfil}</td>
+                        <td><button class="btn btn-danger" onclick="deleteAndRefresh('usuarios', ${item.id})">Excluir</button></td>
+                    </tr>
+                `;
+            });
+        }
+
+        // Alterar Senha
+        document.getElementById('form-alterar-senha').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const novaSenha = document.getElementById('nova-senha').value;
+            const currentUser = JSON.parse(localStorage.getItem('usuario_logado'));
+            
+            let users = getData('usuarios');
+            users = users.map(u => {
+                if(u.id === currentUser.id || u.usuario === currentUser.usuario) {
+                    u.senha = novaSenha;
+                }
+                return u;
+            });
+
+            saveData('usuarios', users);
+            alert('Senha alterada com sucesso!');
+            this.reset();
+        });
+
+        // Função Global de Exclusão
+        window.deleteAndRefresh = function(key, id) {
+            removeItem(key, id);
+            renderAllTables();
+            updateDashboard();
+        };
+
+        function renderAllTables() {
+            renderInstrutores();
+            renderSalas();
+            renderHorarios();
+            renderAdmins();
+        }
+
+        // STARTUP
+        initStorage();
+        checkSession();
+    </script>
+</body>
+</html>
