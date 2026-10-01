@@ -5,10 +5,12 @@ $currentPage = basename($_SERVER['PHP_SELF']);
 <aside class="sidebar">
 
     <div class="brand">
-        <span class="brand-mark">⌂</span>
+        <div class="brand-logos" aria-label="SESI e SENAI">
+            <img src="assets/img/logo-sesi.png" class="brand-logo brand-logo-sesi" alt="SESI">
+            <img src="assets/img/logo-senai.png" class="brand-logo brand-logo-senai" alt="SENAI">
+        </div>
 
-        <div>
-            <b>SESI SENAI</b>
+        <div class="brand-copy">
             <small>Gestão Acadêmica</small>
         </div>
     </div>
@@ -22,7 +24,19 @@ $currentPage = basename($_SERVER['PHP_SELF']);
             <span>Início</span>
         </a>
 
-        <?php if (is_instructor()): ?>
+        <?php if (is_admin()): ?>
+
+            <div class="nav-label">ADMINISTRAÇÃO</div>
+
+            <a href="administradores.php"
+               class="<?= $currentPage === 'administradores.php' ? 'active' : '' ?>">
+                <span class="nav-ico">♙</span>
+                <span>Cadastro de Usuários</span>
+            </a>
+
+        <?php endif; ?>
+
+        <?php if (is_admin()): ?>
 
             <div class="nav-label">GESTÃO</div>
 

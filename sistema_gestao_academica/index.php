@@ -15,7 +15,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $senha = $_POST['senha'] ?? '';
 
     if (login_user($cpf, $senha)) {
-        header('Location: dashboard.php');
+        if (must_change_password()) {
+            header('Location: alterar_senha.php');
+        } else {
+            header('Location: dashboard.php');
+        }
         exit;
     }
 
@@ -43,7 +47,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     <link
         rel="stylesheet"
-        href="assets/css/style.css?v=20260907"
+        href="assets/css/style.css?v=20260917b"
     >
 
 </head>
@@ -56,24 +60,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     <section class="login-brand">
 
-        <div class="brand">
-
-            <span class="brand-mark">
-                ⌂
-            </span>
-
-            <div>
-
-                <b>
-                    SESI SENAI
-                </b>
-
-                <small>
-                    Sistema de Gestão Acadêmica
-                </small>
-
+        <div class="brand login-brand-logos">
+            <div class="brand-logos" aria-label="SESI e SENAI">
+                <img src="assets/img/logo-sesi.png" class="brand-logo brand-logo-sesi" alt="SESI">
+                <img src="assets/img/logo-senai.png" class="brand-logo brand-logo-senai" alt="SENAI">
             </div>
 
+            <div class="brand-copy">
+                <small>Sistema de Gestão Acadêmica</small>
+            </div>
         </div>
 
 
@@ -128,18 +123,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         <div class="card-inner">
 
-            <div class="mini-logo">
-                ⌂
-            </div>
-
-
             <h2>
                 Acesse sua conta
             </h2>
 
 
             <p class="muted">
-                Use suas credenciais institucionais.
+                Informe seu CPF e sua senha para acessar o sistema.
             </p>
 
 
@@ -183,12 +173,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                 <label>
 
-                    USUÁRIO / CPF
+                    CPF
 
                     <input
                         type="text"
                         name="cpf"
-                        placeholder="Usuário.nome ou CPF"
+                        placeholder="000.000.000-00"
                         value="<?= e($_POST['cpf'] ?? '') ?>"
                         required
                         autofocus
@@ -260,33 +250,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             </form>
 
-
-            <!-- =================================================
-                 SEPARADOR
-                 ================================================= -->
-
-            <div class="or">
-
-                <span>
-                    ou
-                </span>
-
-            </div>
-
-
-            <!-- =================================================
-                 CRIAR CONTA
-                 ================================================= -->
-
-            <a
-                href="criar_conta.php"
-                class="btn light full"
-            >
-                ＋ &nbsp;
-                Criar nova conta
-            </a>
-
-
             <p class="help-mail">
 
                 Problemas?
@@ -303,6 +266,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 
     <script src="assets/js/app.js"></script>
+<script src="assets/js/app.js"></script>
+
+<!-- VLibras -->
+<div vw class="enabled">
+    <div vw-access-button class="active"></div>
+
+    <div vw-plugin-wrapper>
+        <div class="vw-plugin-top-wrapper"></div>
+    </div>
+</div>
+
+<script src="https://vlibras.gov.br/app/vlibras-plugin.js"></script>
+
+<script>
+    new window.VLibras.Widget('https://vlibras.gov.br/app');
+</script>
 
 </body>
 

@@ -5,47 +5,175 @@ require_login();
 
 $title = 'Consulta de Horários';
 
-$ini = $_GET['ini'] ?? '2025-08-07';
-$fim = $_GET['fim'] ?? '2025-08-08';
-$periodo = $_GET['periodo'] ?? '';
-$inst = $_GET['instrutor'] ?? '';
-$turma = $_GET['turma'] ?? '';
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'update_aula') {
+    require_editor();
 
-$where = ["a.data_aula BETWEEN ? AND ?"];
-$params = [$ini, $fim];
+    $id = (int)($_POST['id'] ?? 0);
+    $turmaId = (int)($_POST['turma_id'] ?? 0);
+    $disciplinaId = (int)($_POST['disciplina_id'] ?? 0);
+    $instrutorId = (int)($_POST['instrutor_id'] ?? 0);
+    $salaId = (int)($_POST['sala_id'] ?? 0);
+    $dataAula = $_POST['data_aula'] ?? '';
+    $periodo = $_POST['periodo'] ?? '';
+    $inicio = $_POST['inicio'] ?? '';
+    $fimAula = $_POST['fim'] ?? '';
+    $tipo = $_POST['tipo'] ?? '';
+    $status = trim($_POST['status'] ?? 'PLANEJADA');
+    $conteudo = trim($_POST['conteudo'] ?? '');
+    $observacoes = trim($_POST['observacoes'] ?? '');
 
-if ($periodo) {
+    $periodosValidos = ['MANHA', 'TARDE', 'NOITE'];
+    $tiposValidos = ['TEORICA', 'PRATICA'];
+
+    if (
+        $id <= 0 || $turmaId <= 0 || $disciplinaId <= 0 || $instrutorId <= 0 ||
+        $salaId <= 0 || !$dataAula || !$inicio || !$fimAula ||
+        !in_array($periodo, $periodosValidos, true) ||
+        !in_array($tipo, $tiposValidos, true)
+    ) {
+        flash('danger', 'Preencha corretamente todos os campos obrigatórios da aula.');
+        header('Location: horarios.php');
+        exit;
+    }
+
+    try {
+        $check = db()->prepare("SELECT * FROM aulas WHERE id = ? LIMIT 1");
+        $check->execute([$id]);
+        $old = $check->fetch();
+
+        if (!$old) {
+            flash('danger', 'Aula não encontrada.');
+            header('Location: horarios.php');
+            exit;
+        }
+
+        $update = db()->prepare("
+            UPDATE aulas
+            SET turma_id = ?, disciplina_id = ?, instrutor_id = ?, sala_id = ?,
+                data_aula = ?, periodo = ?, inicio = ?, fim = ?, tipo = ?,
+                status = ?, conteudo = ?, observacoes = ?
+            WHERE id = ?
+        ");
+
+        $update->execute([
+            $turmaId, $disciplinaId, $instrutorId, $salaId,
+            $dataAula, $periodo, $inicio, $fimAula, $tipo,
+            $status ?: 'PLANEJADA', $conteudo ?: null, $observacoes ?: null, $id
+        ]);
+
+        $check->execute([$id]);
+        $new = $check->fetch();
+
+        if (function_exists('audit')) {
+            audit('aulas', $id, 'UPDATE', $old, $new ?: null);
+        }
+
+        flash('success', 'Aula atualizada com sucesso.');
+    } catch (PDOException $e) {
+        flash('danger', 'Não foi possível atualizar a aula. Verifique os dados informados.');
+    }
+
+    header('Location: horarios.php');
+    exit;
+}
+
+/*
+ * Filtros da consulta.
+ * Se o usuário não informar datas, usamos o intervalo das aulas
+ * cadastradas no banco para que a consulta não fique vazia apenas
+ * por causa de datas antigas da carga inicial.
+ */
+$periodosValidos = ['', 'MANHA', 'TARDE', 'NOITE'];
+
+$ini = trim($_GET['ini'] ?? '');
+$fim = trim($_GET['fim'] ?? '');
+$periodo = strtoupper(trim($_GET['periodo'] ?? ''));
+$inst = trim($_GET['instrutor'] ?? '');
+$turma = trim($_GET['turma'] ?? '');
+
+function validar_data_filtro(string $data): bool {
+    if ($data === '') {
+        return true;
+    }
+
+    $d = DateTime::createFromFormat('Y-m-d', $data);
+
+    return $d !== false && $d->format('Y-m-d') === $data;
+}
+
+if (!validar_data_filtro($ini) || !validar_data_filtro($fim)) {
+    flash('danger', 'As datas informadas são inválidas.');
+    header('Location: horarios.php');
+    exit;
+}
+
+if (!in_array($periodo, $periodosValidos, true)) {
+    flash('danger', 'Período inválido.');
+    header('Location: horarios.php');
+    exit;
+}
+
+if ($ini !== '' && $fim !== '' && $ini > $fim) {
+    flash('danger', 'A data inicial não pode ser maior que a data final.');
+    header('Location: horarios.php');
+    exit;
+}
+
+if ($inst !== '' && (!ctype_digit($inst) || (int)$inst <= 0)) {
+    flash('danger', 'Instrutor inválido.');
+    header('Location: horarios.php');
+    exit;
+}
+
+if ($turma !== '' && (!ctype_digit($turma) || (int)$turma <= 0)) {
+    flash('danger', 'Turma inválida.');
+    header('Location: horarios.php');
+    exit;
+}
+
+/*
+ * Sem datas, consulta todas as aulas cadastradas.
+ * Isso também funciona com a carga de demonstração do projeto.
+ */
+$where = [];
+$params = [];
+
+if ($ini !== '') {
+    $where[] = "a.data_aula >= ?";
+    $params[] = $ini;
+}
+
+if ($fim !== '') {
+    $where[] = "a.data_aula <= ?";
+    $params[] = $fim;
+}
+
+if ($periodo !== '') {
     $where[] = "a.periodo = ?";
     $params[] = $periodo;
 }
 
-if ($inst) {
+if ($inst !== '') {
     $where[] = "i.id = ?";
-    $params[] = $inst;
+    $params[] = (int)$inst;
 }
 
-if ($turma) {
+if ($turma !== '') {
     $where[] = "t.id = ?";
-    $params[] = $turma;
+    $params[] = (int)$turma;
 }
 
 /*
- * O aluno só visualiza horários das turmas
- * em que está matriculado.
+ * ALUNO:
+ * - pode consultar os horários;
+ * - pode usar os filtros;
+ * - pode imprimir/exportar;
+ * - não recebe formulário de edição;
+ * - qualquer POST de atualização passa por require_editor().
+ *
+ * Portanto, a restrição de edição é feita no servidor, e não somente
+ * escondendo o botão no HTML.
  */
-if (!is_instructor()) {
-    $where[] = "
-        EXISTS (
-            SELECT 1
-            FROM matriculas m
-            JOIN alunos al ON al.id = m.aluno_id
-            WHERE al.usuario_id = ?
-            AND m.turma_id = t.id
-        )
-    ";
-
-    $params[] = user()['id'];
-}
 
 $sql = "
     SELECT
@@ -65,9 +193,13 @@ $sql = "
         ON i.id = ii.usuario_id
     JOIN salas s
         ON s.id = a.sala_id
-    WHERE " . implode(' AND ', $where) . "
-    ORDER BY a.data_aula, a.inicio
 ";
+
+if ($where) {
+    $sql .= " WHERE " . implode(' AND ', $where);
+}
+
+$sql .= " ORDER BY a.data_aula, a.inicio";
 
 $st = db()->prepare($sql);
 $st->execute($params);
@@ -95,13 +227,15 @@ $turmas = db()->query("
 require 'partials/header.php';
 require 'partials/sidebar.php';
 
+$messages = flashes();
+
 ?>
 
 <section class="page-head">
 
     <div>
         <h1>Consulta de Horários</h1>
-        <p>Filtre, edite e gerencie os horários das aulas</p>
+        <p><?= is_admin() ? 'Filtre, edite e gerencie os horários das aulas' : 'Consulte os horários das aulas — somente visualização' ?></p>
     </div>
 
     <div>
@@ -269,7 +403,9 @@ require 'partials/sidebar.php';
                     <th>TIPO</th>
                     <th>PERÍODO</th>
                     <th>HORÁRIO</th>
-                    <th>AÇÕES</th>
+                    <?php if (is_admin()): ?>
+                        <th>AÇÕES</th>
+                    <?php endif; ?>
                 </tr>
 
             </thead>
@@ -322,27 +458,18 @@ require 'partials/sidebar.php';
                             <?= substr($r['fim'], 0, 5) ?>
                         </td>
 
+                        <?php if (is_admin()): ?>
                         <td>
-
-                            <?php if (is_instructor()): ?>
-
-                                <button
-                                    class="icon"
-                                    onclick="alert('Editor de aula: <?= e($r['materia']) ?>')"
-                                    title="Editar aula"
-                                >
-                                    ✎
-                                </button>
-
-                            <?php else: ?>
-
-                                <span class="muted">
-                                    Visualizar
-                                </span>
-
-                            <?php endif; ?>
-
+                            <button
+                                class="icon"
+                                type="button"
+                                onclick='editAula(<?= json_encode($r, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT) ?>)'
+                                title="Editar aula"
+                            >
+                                ✎
+                            </button>
                         </td>
+                        <?php endif; ?>
 
                     </tr>
 
@@ -355,5 +482,130 @@ require 'partials/sidebar.php';
     </div>
 
 </div>
+
+
+<?php if (is_admin()): ?>
+<div class="modal" id="aulaModal">
+    <div class="modal-box">
+        <button class="modal-close" type="button" onclick="closeModal('aulaModal')" aria-label="Fechar">×</button>
+
+        <h2 id="aulaModalTitle">Editar aula</h2>
+        <p class="muted">Altere os dados da aula selecionada.</p>
+
+        <form method="post">
+            <input type="hidden" name="action" value="update_aula">
+            <input type="hidden" name="id" id="aula_id">
+
+            <div class="form-grid">
+                <label>
+                    DATA
+                    <input type="date" name="data_aula" id="aula_data" required>
+                </label>
+
+                <label>
+                    PERÍODO
+                    <select name="periodo" id="aula_periodo" required>
+                        <option value="MANHA">Manhã</option>
+                        <option value="TARDE">Tarde</option>
+                        <option value="NOITE">Noite</option>
+                    </select>
+                </label>
+
+                <label>
+                    TURMA
+                    <select name="turma_id" id="aula_turma" required>
+                        <?php foreach ($turmas as $t): ?>
+                            <option value="<?= (int)$t['id'] ?>"><?= e($t['codigo']) ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </label>
+
+                <label>
+                    INSTRUTOR
+                    <select name="instrutor_id" id="aula_instrutor" required>
+                        <?php foreach ($insts as $i): ?>
+                            <option value="<?= (int)$i['id'] ?>"><?= e($i['nome']) ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </label>
+
+                <label>
+                    DISCIPLINA
+                    <select name="disciplina_id" id="aula_disciplina" required>
+                        <?php
+                        $disciplinas = db()->query("SELECT id, codigo, nome FROM disciplinas WHERE ativo = 1 ORDER BY nome")->fetchAll();
+                        foreach ($disciplinas as $d):
+                        ?>
+                            <option value="<?= (int)$d['id'] ?>">
+                                <?= e($d['codigo'].' - '.$d['nome']) ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                </label>
+
+                <label>
+                    SALA
+                    <select name="sala_id" id="aula_sala" required>
+                        <?php
+                        $salas = db()->query("SELECT id, nome FROM salas WHERE ativo = 1 ORDER BY nome")->fetchAll();
+                        foreach ($salas as $s):
+                        ?>
+                            <option value="<?= (int)$s['id'] ?>"><?= e($s['nome']) ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </label>
+
+                <label>
+                    INÍCIO
+                    <input type="time" name="inicio" id="aula_inicio" required>
+                </label>
+
+                <label>
+                    FIM
+                    <input type="time" name="fim" id="aula_fim" required>
+                </label>
+
+                <label>
+                    TIPO
+                    <select name="tipo" id="aula_tipo" required>
+                        <option value="TEORICA">Teórica</option>
+                        <option value="PRATICA">Prática</option>
+                    </select>
+                </label>
+
+                <label>
+                    STATUS
+                    <input type="text" name="status" id="aula_status" maxlength="30" placeholder="PLANEJADA">
+                </label>
+            </div>
+
+            <label>
+                CONTEÚDO
+                <textarea name="conteudo" id="aula_conteudo"></textarea>
+            </label>
+
+            <label>
+                OBSERVAÇÕES
+                <textarea name="observacoes" id="aula_observacoes"></textarea>
+            </label>
+
+            <div class="modal-actions">
+                <button type="button" class="btn light" onclick="closeModal('aulaModal')">Cancelar</button>
+                <button type="submit" class="btn primary">Salvar alterações</button>
+            </div>
+        </form>
+    </div>
+</div>
+<?php endif; ?>
+
+<?php if ($messages): ?>
+    <script>
+        <?php foreach ($messages as $message): ?>
+            window.addEventListener('DOMContentLoaded', function () {
+                showFlash(<?= json_encode($message['type']) ?>, <?= json_encode($message['message']) ?>);
+            });
+        <?php endforeach; ?>
+    </script>
+<?php endif; ?>
 
 <?php require 'partials/footer.php'; ?>

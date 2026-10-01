@@ -2,7 +2,7 @@
 
 require_once __DIR__ . '/functions.php';
 
-require_instructor();
+require_editor();
 
 $title = 'Movimentação';
 

@@ -1,5 +1,5 @@
 <?php
-require_once __DIR__.'/functions.php'; require_instructor(); $title='Cadastros';
+require_once __DIR__.'/functions.php'; require_editor(); $title='Cadastros';
 $tab=$_GET['tab']??'turmas';
 if($_SERVER['REQUEST_METHOD']==='POST'){
  $action=$_POST['action']??'';
@@ -19,13 +19,7 @@ if($_SERVER['REQUEST_METHOD']==='POST'){
    $id=(int)($_POST['id']??0);$data=[trim($_POST['codigo']),trim($_POST['nome']),trim($_POST['descricao']),($_POST['carga_horaria']?:null)];
    if($id){$st=db()->prepare("UPDATE disciplinas SET codigo=?,nome=?,descricao=?,carga_horaria=? WHERE id=?");$st->execute([...$data,$id]);}else{$st=db()->prepare("INSERT INTO disciplinas(codigo,nome,descricao,carga_horaria) VALUES(?,?,?,?)");$st->execute($data);} flash('success','Disciplina salva.');
   } elseif($action==='save_instrutor'){
-   $cpf=trim($_POST['cpf']); $nome=trim($_POST['nome']); $email=trim($_POST['email']); $area=trim($_POST['area']); $senha=$_POST['senha']?:'123456';
-   $pdo=db(); $pdo->beginTransaction();
-   $st=$pdo->prepare("SELECT id FROM usuarios WHERE REPLACE(REPLACE(cpf,'.',''),'-','')=?");$st->execute([cpf_digits($cpf)]);$uid=$st->fetchColumn();
-   if($uid){$pdo->prepare("UPDATE usuarios SET nome=?,email=?,perfil='INSTRUTOR',status='ATIVO',senha_hash=? WHERE id=?")->execute([$nome,$email,password_hash($senha,PASSWORD_DEFAULT),$uid]);}
-   else {$pdo->prepare("INSERT INTO usuarios(cpf,nome,email,senha_hash,perfil) VALUES(?,?,?,?, 'INSTRUTOR')")->execute([$cpf,$nome,$email,password_hash($senha,PASSWORD_DEFAULT)]);$uid=$pdo->lastInsertId();}
-   $pdo->prepare("INSERT INTO instrutores(usuario_id,cpf,area,email) VALUES(?,?,?,?) ON DUPLICATE KEY UPDATE area=VALUES(area),email=VALUES(email),ativo=1")->execute([$uid,$cpf,$area,$email]);
-   $pdo->commit(); flash('success','Instrutor cadastrado.');
+   throw new Exception('Instrutores devem ser cadastrados diretamente no banco de dados.');
   }
  }catch(Throwable $e){ if(db()->inTransaction())db()->rollBack(); flash('danger',$e->getCode()==23000?'Já existe um registro com esses dados.':$e->getMessage()); }
  header('Location: cadastros.php?tab='.urlencode($tab));exit;

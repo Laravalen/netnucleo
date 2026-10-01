@@ -14,7 +14,8 @@ CREATE TABLE usuarios (
     nome VARCHAR(150) NOT NULL,
     email VARCHAR(180) UNIQUE,
     senha_hash VARCHAR(255) NOT NULL,
-    perfil ENUM('ALUNO','INSTRUTOR') NOT NULL DEFAULT 'ALUNO',
+    senha_provisoria TINYINT(1) NOT NULL DEFAULT 1,
+    perfil ENUM('ALUNO','INSTRUTOR','ADMIN') NOT NULL DEFAULT 'ALUNO',
     status ENUM('ATIVO','INATIVO') NOT NULL DEFAULT 'ATIVO',
     criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     atualizado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
@@ -214,19 +215,23 @@ CREATE TABLE auditoria (
     FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE SET NULL
 ) ENGINE=InnoDB;
 
--- Login inicial do instrutor solicitado:
--- CPF: 123.456.789-00 | Senha inicial: 123456
-INSERT INTO usuarios (cpf,nome,email,senha_hash,perfil)
-VALUES ('123.456.789-00','Instrutor Administrador','admin@senai.local',
-'$2y$12$QoIY7.zH/0My9HuHHqtzi.UjZVT3jEw9qIBMrjxQnuwVPdtZuAjoq','INSTRUTOR');
+-- LOGIN INICIAL
+-- Todos os usuários inseridos por este arquivo recebem a senha padrão:
+-- SesiSenai@2026
+-- No primeiro acesso, senha_provisoria=1 obriga a criação de uma senha pessoal.
+--
+-- NOVOS USUÁRIOS:
+-- Novos instrutores e alunos devem ser cadastrados pela tela exclusiva do ADMINISTRADOR.
+-- Nunca salve a senha em texto puro; use password_hash() no PHP ou gere um
+-- hash compatível com password_hash() antes de inserir o usuário.
+INSERT INTO usuarios (cpf,nome,email,senha_hash,senha_provisoria,perfil)
+VALUES ('123.456.789-00','Administrador do Sistema','admin@senai.local',
+'$2y$12$ab9S100DDLckXCcvBdcPbeNqFYtZq181BcOUe8qS2Towe2IttVFZS',1,'ADMIN');
 
-INSERT INTO instrutores (usuario_id,cpf,area,email)
-SELECT id,cpf,'Administração','admin@senai.local'
-FROM usuarios WHERE cpf='123.456.789-00';
 
-INSERT INTO usuarios (cpf,nome,email,senha_hash,perfil)
+INSERT INTO usuarios (cpf,nome,email,senha_hash,senha_provisoria,perfil)
 VALUES ('111.111.111-11','Aluno Demonstração','aluno@senai.local',
-'$2y$12$QoIY7.zH/0My9HuHHqtzi.UjZVT3jEw9qIBMrjxQnuwVPdtZuAjoq','ALUNO');
+'$2y$12$ab9S100DDLckXCcvBdcPbeNqFYtZq181BcOUe8qS2Towe2IttVFZS',1,'ALUNO');
 
 INSERT INTO alunos (usuario_id,matricula,data_nascimento)
 SELECT id,'ALU-2025-001','2008-05-10'
@@ -247,13 +252,13 @@ INSERT INTO disciplinas(codigo,nome,carga_horaria) VALUES
 ('INS01','Instalações Elétricas',80);
 
 INSERT INTO turmas(codigo,nome,curso_id,periodo,data_inicio,data_fim,capacidade,status) VALUES
-('ELE-2025-A','ELE-2025-A',(SELECT id FROM cursos WHERE codigo='ELE'),'MANHA','2025-02-03','2025-11-28',30,'ATIVA'),
-('MEC-2025-A','MEC-2025-A',(SELECT id FROM cursos WHERE codigo='MEC'),'TARDE','2025-02-03','2025-11-28',30,'ATIVA'),
-('MEC-2025-B','MEC-2025-B',(SELECT id FROM cursos WHERE codigo='MEC'),'MANHA','2025-02-03','2025-11-28',30,'ATIVA'),
-('TI-2025-A','TI-2025-A',(SELECT id FROM cursos WHERE codigo='TI'),'NOITE','2025-02-05','2025-12-05',30,'ATIVA'),
-('TI-2025-B','TI-2025-B',(SELECT id FROM cursos WHERE codigo='TI'),'NOITE','2025-02-05','2025-12-05',30,'ATIVA'),
-('SEG-2025-A','SEG-2025-A',(SELECT id FROM cursos WHERE codigo='SEG'),'NOITE','2025-02-07','2025-11-21',30,'ATIVA'),
-('ELE-2024-B','ELE-2024-B',(SELECT id FROM cursos WHERE codigo='ELE'),'TARDE','2024-02-05','2024-11-29',30,'ENCERRADA');
+('ELE-2025-A','ELE-2025-A',(SELECT id FROM cursos WHERE codigo='ELE'),'MANHA',DATE_SUB(CURDATE(), INTERVAL 30 DAY),DATE_ADD(CURDATE(), INTERVAL 90 DAY),30,'ATIVA'),
+('MEC-2025-A','MEC-2025-A',(SELECT id FROM cursos WHERE codigo='MEC'),'TARDE',DATE_SUB(CURDATE(), INTERVAL 30 DAY),DATE_ADD(CURDATE(), INTERVAL 90 DAY),30,'ATIVA'),
+('MEC-2025-B','MEC-2025-B',(SELECT id FROM cursos WHERE codigo='MEC'),'MANHA',DATE_SUB(CURDATE(), INTERVAL 30 DAY),DATE_ADD(CURDATE(), INTERVAL 90 DAY),30,'ATIVA'),
+('TI-2025-A','TI-2025-A',(SELECT id FROM cursos WHERE codigo='TI'),'NOITE',DATE_SUB(CURDATE(), INTERVAL 30 DAY),DATE_ADD(CURDATE(), INTERVAL 100 DAY),30,'ATIVA'),
+('TI-2025-B','TI-2025-B',(SELECT id FROM cursos WHERE codigo='TI'),'NOITE',DATE_SUB(CURDATE(), INTERVAL 30 DAY),DATE_ADD(CURDATE(), INTERVAL 100 DAY),30,'ATIVA'),
+('SEG-2025-A','SEG-2025-A',(SELECT id FROM cursos WHERE codigo='SEG'),'NOITE',DATE_SUB(CURDATE(), INTERVAL 30 DAY),DATE_ADD(CURDATE(), INTERVAL 90 DAY),30,'ATIVA'),
+('ELE-2024-B','ELE-2024-B',(SELECT id FROM cursos WHERE codigo='ELE'),'TARDE',DATE_SUB(CURDATE(), INTERVAL 400 DAY),DATE_SUB(CURDATE(), INTERVAL 30 DAY),30,'ENCERRADA');
 
 INSERT INTO salas(codigo,nome,bloco,tipo,capacidade,descricao,status) VALUES
 ('LAB03','Lab 03','Bloco A','LABORATORIO',30,'Bancadas, multímetros, fontes de tensão','DISPONIVEL'),
@@ -263,17 +268,25 @@ INSERT INTO salas(codigo,nome,bloco,tipo,capacidade,descricao,status) VALUES
 ('SALA05','Sala 05','Bloco D','SALA_TEORICA',40,'Projetor 4K, quadro branco, ar-condicionado','DISPONIVEL'),
 ('AUD01','Auditório','Bloco Principal','AUDITORIO',120,'Auditório principal','DISPONIVEL');
 
-INSERT INTO usuarios(cpf,nome,email,senha_hash,perfil) VALUES
-('222.222.222-22','Carlos Mendes','carlos@senai.local','$2y$12$QoIY7.zH/0My9HuHHqtzi.UjZVT3jEw9qIBMrjxQnuwVPdtZuAjoq','INSTRUTOR'),
-('333.333.333-33','Ana Paula Souza','ana@senai.local','$2y$12$QoIY7.zH/0My9HuHHqtzi.UjZVT3jEw9qIBMrjxQnuwVPdtZuAjoq','INSTRUTOR'),
-('444.444.444-44','Roberto Lima','roberto@senai.local','$2y$12$QoIY7.zH/0My9HuHHqtzi.UjZVT3jEw9qIBMrjxQnuwVPdtZuAjoq','INSTRUTOR'),
-('555.555.555-55','Fernanda Castro','fernanda@senai.local','$2y$12$QoIY7.zH/0My9HuHHqtzi.UjZVT3jEw9qIBMrjxQnuwVPdtZuAjoq','INSTRUTOR'),
-('666.666.666-66','Marcos Oliveira','marcos@senai.local','$2y$12$QoIY7.zH/0My9HuHHqtzi.UjZVT3jEw9qIBMrjxQnuwVPdtZuAjoq','INSTRUTOR'),
-('777.777.777-77','Juliana Ferreira','juliana@senai.local','$2y$12$QoIY7.zH/0My9HuHHqtzi.UjZVT3jEw9qIBMrjxQnuwVPdtZuAjoq','INSTRUTOR');
+INSERT INTO usuarios(cpf,nome,email,senha_hash,senha_provisoria,perfil) VALUES
+('222.222.222-22','Carlos Mendes','carlos@senai.local','$2y$12$ab9S100DDLckXCcvBdcPbeNqFYtZq181BcOUe8qS2Towe2IttVFZS',1,'INSTRUTOR'),
+('333.333.333-33','Ana Paula Souza','ana@senai.local','$2y$12$ab9S100DDLckXCcvBdcPbeNqFYtZq181BcOUe8qS2Towe2IttVFZS',1,'INSTRUTOR'),
+('444.444.444-44','Roberto Lima','roberto@senai.local','$2y$12$ab9S100DDLckXCcvBdcPbeNqFYtZq181BcOUe8qS2Towe2IttVFZS',1,'INSTRUTOR'),
+('555.555.555-55','Fernanda Castro','fernanda@senai.local','$2y$12$ab9S100DDLckXCcvBdcPbeNqFYtZq181BcOUe8qS2Towe2IttVFZS',1,'INSTRUTOR'),
+('666.666.666-66','Marcos Oliveira','marcos@senai.local','$2y$12$ab9S100DDLckXCcvBdcPbeNqFYtZq181BcOUe8qS2Towe2IttVFZS',1,'INSTRUTOR'),
+('777.777.777-77','Juliana Ferreira','juliana@senai.local','$2y$12$ab9S100DDLckXCcvBdcPbeNqFYtZq181BcOUe8qS2Towe2IttVFZS',1,'INSTRUTOR');
 
 INSERT INTO instrutores(usuario_id,cpf,area,email)
-SELECT id,cpf,'Docência',email FROM usuarios WHERE cpf IN
-('222.222.222-22','333.333.333-33','444.444.444-44','555.555.555-55','666.666.666-66','777.777.777-77');
+SELECT id,cpf,'Docência',email
+FROM usuarios
+WHERE cpf IN (
+    '222.222.222-22',
+    '333.333.333-33',
+    '444.444.444-44',
+    '555.555.555-55',
+    '666.666.666-66',
+    '777.777.777-77'
+);
 
 INSERT INTO turma_disciplinas(turma_id,disciplina_id,instrutor_id,carga_horaria)
 SELECT t.id,d.id,i.id,d.carga_horaria
@@ -285,15 +298,17 @@ WHERE t.codigo='ELE-2025-A';
 
 INSERT INTO aulas(turma_id,disciplina_id,instrutor_id,sala_id,data_aula,periodo,inicio,fim,tipo,status)
 VALUES
-((SELECT id FROM turmas WHERE codigo='ELE-2025-A'),(SELECT id FROM disciplinas WHERE codigo='ELE01'),(SELECT id FROM instrutores WHERE cpf='222.222.222-22'),(SELECT id FROM salas WHERE codigo='LAB03'),'2025-08-07','MANHA','07:00','08:40','TEORICA','PLANEJADA'),
-((SELECT id FROM turmas WHERE codigo='TI-2025-A'),(SELECT id FROM disciplinas WHERE codigo='CNC01'),(SELECT id FROM instrutores WHERE cpf='333.333.333-33'),(SELECT id FROM salas WHERE codigo='LABMEC01'),'2025-08-07','MANHA','07:00','08:40','PRATICA','PLANEJADA'),
-((SELECT id FROM turmas WHERE codigo='TI-2025-A'),(SELECT id FROM disciplinas WHERE codigo='RED01'),(SELECT id FROM instrutores WHERE cpf='444.444.444-44'),(SELECT id FROM salas WHERE codigo='LABTI02'),'2025-08-07','MANHA','07:00','08:40','PRATICA','PLANEJADA'),
-((SELECT id FROM turmas WHERE codigo='MEC-2025-A'),(SELECT id FROM disciplinas WHERE codigo='DES01'),(SELECT id FROM instrutores WHERE cpf='555.555.555-55'),(SELECT id FROM salas WHERE codigo='SALA05'),'2025-08-07','TARDE','13:00','14:40','TEORICA','PLANEJADA'),
-((SELECT id FROM turmas WHERE codigo='MEC-2025-B'),(SELECT id FROM disciplinas WHERE codigo='AUT01'),(SELECT id FROM instrutores WHERE cpf='666.666.666-66'),(SELECT id FROM salas WHERE codigo='LABMEC01'),'2025-08-07','TARDE','13:00','14:40','PRATICA','PLANEJADA'),
-((SELECT id FROM turmas WHERE codigo='ELE-2025-A'),(SELECT id FROM disciplinas WHERE codigo='INS01'),(SELECT id FROM instrutores WHERE cpf='222.222.222-22'),(SELECT id FROM salas WHERE codigo='LAB03'),'2025-08-08','MANHA','07:00','08:40','PRATICA','PLANEJADA');
+((SELECT id FROM turmas WHERE codigo='ELE-2025-A'),(SELECT id FROM disciplinas WHERE codigo='ELE01'),(SELECT id FROM instrutores WHERE cpf='222.222.222-22'),(SELECT id FROM salas WHERE codigo='LAB03'),CURDATE(),'MANHA','07:00','08:40','TEORICA','PLANEJADA'),
+((SELECT id FROM turmas WHERE codigo='TI-2025-A'),(SELECT id FROM disciplinas WHERE codigo='CNC01'),(SELECT id FROM instrutores WHERE cpf='333.333.333-33'),(SELECT id FROM salas WHERE codigo='LABMEC01'),CURDATE(),'MANHA','07:00','08:40','PRATICA','PLANEJADA'),
+((SELECT id FROM turmas WHERE codigo='TI-2025-A'),(SELECT id FROM disciplinas WHERE codigo='RED01'),(SELECT id FROM instrutores WHERE cpf='444.444.444-44'),(SELECT id FROM salas WHERE codigo='LABTI02'),CURDATE(),'MANHA','07:00','08:40','PRATICA','PLANEJADA'),
+((SELECT id FROM turmas WHERE codigo='MEC-2025-A'),(SELECT id FROM disciplinas WHERE codigo='DES01'),(SELECT id FROM instrutores WHERE cpf='555.555.555-55'),(SELECT id FROM salas WHERE codigo='SALA05'),CURDATE(),'TARDE','13:00','14:40','TEORICA','PLANEJADA'),
+((SELECT id FROM turmas WHERE codigo='MEC-2025-B'),(SELECT id FROM disciplinas WHERE codigo='AUT01'),(SELECT id FROM instrutores WHERE cpf='666.666.666-66'),(SELECT id FROM salas WHERE codigo='LABMEC01'),CURDATE(),'TARDE','13:00','14:40','PRATICA','PLANEJADA'),
+((SELECT id FROM turmas WHERE codigo='ELE-2025-A'),(SELECT id FROM disciplinas WHERE codigo='INS01'),(SELECT id FROM instrutores WHERE cpf='222.222.222-22'),(SELECT id FROM salas WHERE codigo='LAB03'),DATE_ADD(CURDATE(),INTERVAL 1 DAY),'MANHA','07:00','08:40','PRATICA','PLANEJADA'),
+((SELECT id FROM turmas WHERE codigo='TI-2025-A'),(SELECT id FROM disciplinas WHERE codigo='RED01'),(SELECT id FROM instrutores WHERE cpf='444.444.444-44'),(SELECT id FROM salas WHERE codigo='LABTI02'),DATE_ADD(CURDATE(),INTERVAL 2 DAY),'NOITE','19:00','20:40','PRATICA','PLANEJADA'),
+((SELECT id FROM turmas WHERE codigo='MEC-2025-A'),(SELECT id FROM disciplinas WHERE codigo='DES01'),(SELECT id FROM instrutores WHERE cpf='555.555.555-55'),(SELECT id FROM salas WHERE codigo='SALA05'),DATE_ADD(CURDATE(),INTERVAL 3 DAY),'TARDE','13:00','14:40','TEORICA','PLANEJADA');
 
 INSERT INTO eventos_calendario(titulo,descricao,data_inicio,data_fim,tipo)
 VALUES
-('Início das aulas','Início do calendário letivo','2025-02-03','2025-02-03','ACADEMICO'),
-('Feriado municipal','Não haverá aulas','2025-08-09','2025-08-09','FERIADO'),
-('Encerramento das turmas','Encerramento do período letivo','2025-11-28','2025-11-28','ACADEMICO');
+('Reunião pedagógica','Reunião de acompanhamento das turmas.',CURDATE(),CURDATE(),'PEDAGOGICO'),
+('Avaliação prática','Avaliação prática prevista para a turma.',DATE_ADD(CURDATE(),INTERVAL 4 DAY),DATE_ADD(CURDATE(),INTERVAL 4 DAY),'AVALIACAO'),
+('Semana acadêmica','Atividades acadêmicas e palestras.',DATE_ADD(CURDATE(),INTERVAL 8 DAY),DATE_ADD(CURDATE(),INTERVAL 10 DAY),'ACADEMICO');

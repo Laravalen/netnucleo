@@ -51,27 +51,37 @@ button,input,select,textarea{font:inherit}
     display:flex;
     align-items:center;
     gap:14px;
-    padding:0 22px;
+    padding:0 18px;
     border-bottom:1px solid rgba(255,255,255,.09);
     color:#fff;
     flex-shrink:0
 }
 
-.brand-mark{
-    width:40px;
-    height:40px;
+.brand-logos{
     display:flex;
     align-items:center;
-    justify-content:center;
-    border-radius:8px;
-    background:#f5a400;
-    color:#fff;
-    font-size:22px;
-    font-weight:bold
+    justify-content:flex-start;
+    gap:8px;
+    flex:0 0 auto;
+    width:132px;
 }
 
+.brand-logo{
+    display:block;
+    width:62px;
+    height:30px;
+    object-fit:contain;
+    object-position:center;
+    pointer-events:none
+}
+
+.brand-logo-sesi{width:61px}
+.brand-logo-senai{width:65px}
+
+.brand-copy{min-width:0;flex:1}
 .brand b{display:block;font-size:17px;font-weight:700;letter-spacing:.3px}
 .brand small{display:block;margin-top:3px;color:#8ea5ca;font-size:12px}
+
 
 .sidebar-nav{
     width:100%;
@@ -700,18 +710,6 @@ textarea{min-height:80px;resize:vertical}
 .card-inner h2{margin:0 0 7px;font-size:25px}
 .card-inner>.muted{font-size:16px;margin:0 0 30px}
 
-.mini-logo{
-    width:42px;
-    height:42px;
-    display:grid;
-    place-items:center;
-    border-radius:9px;
-    background:var(--orange);
-    color:#fff;
-    font-size:21px;
-    font-weight:800;
-    margin-bottom:20px
-}
 
 .login-card label{font-size:12px;margin-bottom:19px}
 .login-card input{height:48px;background:#f4f5fa;font-size:15px;padding-left:15px}
@@ -840,9 +838,20 @@ textarea{min-height:80px;resize:vertical}
     background:transparent
 }
 
-.login-brand>.brand .brand-mark{width:42px;height:42px}
-.login-brand>.brand b{font-size:19px}
-.login-brand>.brand small{font-size:12px}
+.login-brand>.brand{
+    display:flex;
+    align-items:center;
+    gap:18px;
+}
+.login-brand>.brand .brand-logos{
+    width:150px;
+    gap:10px;
+}
+.login-brand>.brand .brand-logo{
+    width:70px;
+    height:34px;
+}
+.login-brand>.brand small{font-size:13px;color:#b9c9e5}
 .login-quote::first-letter{color:#fff}
 
 /* AJUSTE RESPONSIVO DOS CARDS */
@@ -854,4 +863,147 @@ textarea{min-height:80px;resize:vertical}
 @media(max-width:1100px) and (min-width:801px){
     .stat{padding-right:82px}
     .stat span{font-size:11px;letter-spacing:.8px}
+}
+
+/* EDITOR DE AULAS */
+.modal-actions{
+    display:flex;
+    justify-content:flex-end;
+    gap:10px;
+    margin-top:6px;
+}
+
+.flash-fixed{
+    position:fixed;
+    top:88px;
+    right:24px;
+    z-index:10000;
+    margin:0;
+    min-width:280px;
+    max-width:420px;
+    box-shadow:0 8px 25px rgba(24,39,75,.16);
+    transition:opacity .35s ease, transform .35s ease;
+}
+
+.flash-fixed.hide{
+    opacity:0;
+    transform:translateY(-8px);
+}
+
+.person{
+    display:flex;
+    align-items:center;
+    gap:10px;
+}
+
+.person-avatar{
+    width:36px;
+    height:36px;
+    min-width:36px;
+    border-radius:50%;
+    display:grid;
+    place-items:center;
+    background:#073d8e;
+    color:#fff;
+    font-size:12px;
+    font-weight:800;
+    line-height:1;
+}
+
+@media(max-width:800px){
+    .flash-fixed{
+        left:18px;
+        right:18px;
+        top:75px;
+        min-width:0;
+        max-width:none;
+    }
+
+}
+
+/* CALENDÁRIO ACADÊMICO — consulta para todos os perfis */
+.calendar-panel{margin-top:20px}
+.calendar-heading{align-items:center;gap:20px}
+.calendar-heading h2{margin-bottom:4px}
+.calendar-heading p{margin:0}
+.calendar-nav{display:flex;align-items:center;gap:10px;white-space:nowrap}
+.calendar-nav .btn{min-width:38px;height:38px;padding:6px 10px}
+.calendar-nav strong{min-width:150px;text-align:center;color:#17345f}
+.calendar-grid{
+    display:grid;
+    grid-template-columns:repeat(7,minmax(0,1fr));
+    border-top:1px solid var(--line);
+    border-left:1px solid var(--line);
+    overflow:hidden;
+    border-radius:10px 10px 0 0
+}
+.calendar-weekday{
+    background:#f5f7fb;
+    color:#60718b;
+    font-size:11px;
+    font-weight:800;
+    letter-spacing:.7px;
+    text-align:center;
+    padding:11px 5px;
+    border-right:1px solid var(--line);
+    border-bottom:1px solid var(--line)
+}
+.calendar-day{
+    min-height:128px;
+    padding:8px;
+    background:#fff;
+    border-right:1px solid var(--line);
+    border-bottom:1px solid var(--line);
+    overflow:hidden
+}
+.calendar-day.empty{background:#fafbfe}
+.calendar-day.today{background:#f7faff}
+.calendar-date{
+    width:27px;
+    height:27px;
+    display:grid;
+    place-items:center;
+    border-radius:50%;
+    color:#53647c;
+    font-weight:800;
+    font-size:12px;
+    margin-bottom:5px
+}
+.calendar-day.today .calendar-date{background:#0d3f91;color:#fff}
+.calendar-events{display:flex;flex-direction:column;gap:4px}
+.calendar-event{
+    display:block;
+    border-radius:6px;
+    padding:5px 6px;
+    text-decoration:none;
+    overflow:hidden;
+    line-height:1.2
+}
+.calendar-event b,.calendar-event small{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.calendar-event b{font-size:10px}
+.calendar-event small{font-size:9px;margin-top:2px;opacity:.78}
+.calendar-event.class{background:#eaf1ff;color:#174a99}
+.calendar-event.room{background:#fff3dc;color:#925b00}
+.calendar-event.academic{background:#e9f8f0;color:#16734b}
+.calendar-event.movement{background:#f2eaff;color:#6b25a5}
+.calendar-more{font-size:9px;color:#718096;padding:2px 5px}
+.calendar-legend{display:flex;flex-wrap:wrap;gap:15px;margin-top:13px;color:#6d788b;font-size:11px}
+.calendar-legend span{display:inline-flex;align-items:center;gap:6px}
+.legend-dot{width:9px;height:9px;border-radius:50%;display:inline-block}
+.legend-dot.class{background:#174a99}
+.legend-dot.room{background:#d28a0a}
+.legend-dot.academic{background:#1b9a62}
+.legend-dot.movement{background:#7b35b8}
+
+@media(max-width:900px){
+    .calendar-day{min-height:105px;padding:6px}
+    .calendar-event small{display:none}
+    .calendar-heading{align-items:flex-start;flex-direction:column}
+    .calendar-nav{width:100%;justify-content:space-between}
+}
+
+@media(max-width:600px){
+    .calendar-grid{min-width:650px}
+    .calendar-panel{overflow-x:auto}
+    .calendar-panel>*{min-width:650px}
 }

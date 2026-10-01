@@ -10,7 +10,7 @@ $title = 'Consulta de Salas';
  */
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
-    require_instructor();
+    require_editor();
 
     $id = (int)($_POST['id'] ?? 0);
 
@@ -80,7 +80,7 @@ require 'partials/sidebar.php';
 
     </div>
 
-    <?php if (is_instructor()): ?>
+    <?php if (is_admin()): ?>
 
         <button
             class="btn primary"
@@ -178,7 +178,7 @@ require 'partials/sidebar.php';
                     <?= e($r['descricao']) ?>
                 </p>
 
-                <?php if (is_instructor()): ?>
+                <?php if (is_admin()): ?>
 
                     <button
                         class="btn small"
@@ -197,7 +197,7 @@ require 'partials/sidebar.php';
 
 </div>
 
-<?php if (is_instructor()): ?>
+<?php if (is_admin()): ?>
 
     <div
         class="modal"
