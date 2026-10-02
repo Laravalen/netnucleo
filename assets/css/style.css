@@ -1007,3 +1007,11 @@ textarea{min-height:80px;resize:vertical}
     .calendar-panel{overflow-x:auto}
     .calendar-panel>*{min-width:650px}
 }
+
+
+/* Oculta o menu de navegação quando a tela/container de login está ativa */
+body.login-active nav,
+body.login-active .navbar,
+body.login-active .sidebar {
+  display: none !important;
+}
